@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from db import init_db, connect_db
+from customtkinter import CTkToplevel
 
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
@@ -26,7 +27,6 @@ class App(ctk.CTk):
 
         self.output_label = ctk.CTkLabel(self, text="")
         self.output_label.pack(pady=10)
-    
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
@@ -40,7 +40,7 @@ class App(ctk.CTk):
         if user:
             role = user[3]
             self.output_label.configure(text=f"Login berhasil sebagai {role}")
-            self.show_question()
+            self.open_dashboard(role)
         else:
             self.output_label.configure(text="Login Gagal.")
     
