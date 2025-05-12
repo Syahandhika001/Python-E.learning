@@ -1,254 +1,243 @@
 import customtkinter as ctk
-from db import init_db, connect_db
-from customtkinter import CTkToplevel
+import sqlite3
+from db import register_user, connect_db
 
-# Inisialisasi database
-init_db()
 
-# Pengaturan tampilan
-ctk.set_appearance_mode("system")
-ctk.set_default_color_theme("blue")
+# Fungsi pindah ke halaman login
+def exit_to_login(app):
+    app.destroy()
+    login_app = LoginApp()
+    login_app.mainloop()
 
-class App(ctk.CTk):
+
+# Halaman Login
+class LoginApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("E-Learning Desktop App")
-        self.geometry("900x600")
+        self.title("Halaman Login")
+        self.geometry("300x330")
+        self.create_widgets()
 
-        # Entry untuk Username dan Password
+    def create_widgets(self):
+        ctk.CTkLabel(self, text="Masuk Akun").pack(pady=10)
+
         self.username_entry = ctk.CTkEntry(self, placeholder_text="Username")
         self.username_entry.pack(pady=10)
 
         self.password_entry = ctk.CTkEntry(self, placeholder_text="Password", show="*")
         self.password_entry.pack(pady=10)
 
-        # Tombol Login
-        self.login_btn = ctk.CTkButton(self, text="Login", command=self.login)
-        self.login_btn.pack(pady=10)
+        ctk.CTkButton(self, text="Login", command=self.login).pack(pady=20)
 
-        # Tombol Register
-        self.register_btn = ctk.CTkButton(self, text="Register", command=self.open_register_window)
-        self.register_btn.pack(pady=5)
+        self.status_label = ctk.CTkLabel(self, text="")
+        self.status_label.pack()
 
-        # Label untuk output
-        self.output_label = ctk.CTkLabel(self, text="")
-        self.output_label.pack(pady=10)
+        ctk.CTkButton(self, text="Belum punya akun? Daftar di sini",
+                      command=self.open_register, fg_color="transparent",
+                      text_color="blue", hover_color="#ccc", border_width=1).pack(pady=10)
+
+    def open_register(self):
+        self.destroy()
+        register_app = RegisterApp()
+        register_app.mainloop()
 
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
 
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        user = cursor.fetchone()
-        conn.close()
-
-        if user:
-            role = user[3]
-            self.output_label.configure(text=f"Login berhasil sebagai {role}")
-            self.open_dashboard(role, user[0])
-        else:
-            self.output_label.configure(text="Login Gagal.")
-
-    def open_register_window(self):
-        register_window = CTkToplevel(self)
-        register_window.title("Registrasi")
-        register_window.geometry("300x300")
-
-        username_entry = ctk.CTkEntry(register_window, placeholder_text="Username")
-        username_entry.pack(pady=10)
-
-        password_entry = ctk.CTkEntry(register_window, placeholder_text="Password", show="*")
-        password_entry.pack(pady=10)
-
-        role_option = ctk.CTkOptionMenu(register_window, values=["siswa", "guru"])
-        role_option.set("siswa")
-        role_option.pack(pady=10)
-
-        def submit_register():
-            username = username_entry.get()
-            password = password_entry.get()
-            role = role_option.get()
-
+        if username and password:
             conn = connect_db()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
-            conn.commit()
+            cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+            user = cursor.fetchone()
             conn.close()
 
-            register_window.destroy()
-            self.output_label.configure(text="Registrasi berhasil!")
-
-        submit_btn = ctk.CTkButton(register_window, text="Submit", command=submit_register)
-        submit_btn.pack(pady=10)
-
-    def open_dashboard(self, role, user_id):
-        for widget in self.winfo_children():
-            widget.destroy()
-
-        if role == "guru":
-            self.show_guru_view(user_id)
-        elif role == "siswa":
-            self.show_siswa_view(user_id)
-
-    def show_guru_view(self, user_id):
-        label = ctk.CTkLabel(self, text="Input Soal Pilihan Ganda (Guru)")
-        label.pack(pady=10)
-
-        # Form input soal
-        question_entry = ctk.CTkEntry(self, placeholder_text="Tulis soal di sini", width=300)
-        question_entry.pack(pady=10)
-
-        option_a_entry = ctk.CTkEntry(self, placeholder_text="Pilihan A", width=300)
-        option_a_entry.pack(pady=5)
-
-        option_b_entry = ctk.CTkEntry(self, placeholder_text="Pilihan B", width=300)
-        option_b_entry.pack(pady=5)
-
-        option_c_entry = ctk.CTkEntry(self, placeholder_text="Pilihan C", width=300)
-        option_c_entry.pack(pady=5)
-
-        option_d_entry = ctk.CTkEntry(self, placeholder_text="Pilihan D", width=300)
-        option_d_entry.pack(pady=5)
-
-        correct_answer_entry = ctk.CTkEntry(self, placeholder_text="Jawaban Benar", width=300)
-        correct_answer_entry.pack(pady=5)
-
-        def simpan_soal():
-            question = question_entry.get()
-            option_a = option_a_entry.get()
-            option_b = option_b_entry.get()
-            option_c = option_c_entry.get()
-            option_d = option_d_entry.get()
-            correct_answer = correct_answer_entry.get()
-
-            if all([question, option_a, option_b, option_c, option_d, correct_answer]):
-                conn = connect_db()
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO questions (question, option_a, option_b, option_c, option_d, correct_answer) VALUES (?, ?, ?, ?, ?, ?)",
-                               (question, option_a, option_b, option_c, option_d, correct_answer))
-                conn.commit()
-                conn.close()
-                label.configure(text="Soal berhasil ditambahkan!")
+            if user:
+                user_id, role = user[0], user[3]
+                self.destroy()
+                if role == "guru":
+                    GuruApp(user_id).mainloop()
+                else:
+                    SiswaApp(user_id).mainloop()
             else:
-                label.configure(text="Mohon isi semua data soal.")
+                self.status_label.configure(text="Username atau Password salah!", text_color="red")
+        else:
+            self.status_label.configure(text="Isi semua data!", text_color="orange")
 
-        submit_btn = ctk.CTkButton(self, text="Simpan Soal", command=simpan_soal)
-        submit_btn.pack(pady=10)
 
-        report_btn = ctk.CTkButton(self, text="Lihat Laporan Nilai Siswa", command=self.view_reports)
-        report_btn.pack(pady=10)
+# Halaman Guru
+class GuruApp(ctk.CTk):
+    def __init__(self, user_id):
+        super().__init__()
+        self.title("Guru - Input Soal")
+        self.geometry("400x600")
+        self.user_id = user_id
+        self.create_widgets()
 
-        exit_btn = ctk.CTkButton(self, text="Keluar", command=self.exit_to_login)
-        exit_btn.pack(pady=10)
+    def create_widgets(self):
+        ctk.CTkLabel(self, text="Input Soal Pilihan Ganda (Guru)").pack(pady=10)
+
+        self.entries = {
+            'question': ctk.CTkEntry(self, placeholder_text="Tulis soal di sini", width=300),
+            'a': ctk.CTkEntry(self, placeholder_text="Pilihan A", width=300),
+            'b': ctk.CTkEntry(self, placeholder_text="Pilihan B", width=300),
+            'c': ctk.CTkEntry(self, placeholder_text="Pilihan C", width=300),
+            'd': ctk.CTkEntry(self, placeholder_text="Pilihan D", width=300),
+            'correct': ctk.CTkEntry(self, placeholder_text="Jawaban Benar", width=300),
+            'explanation': ctk.CTkEntry(self, placeholder_text="Penjelasan Soal", width=300)
+        }
+
+        for entry in self.entries.values():
+            entry.pack(pady=5)
+
+        self.status = ctk.CTkLabel(self, text="")
+        self.status.pack(pady=5)
+
+        ctk.CTkButton(self, text="Simpan Soal", command=self.simpan_soal).pack(pady=10)
+        ctk.CTkButton(self, text="Lihat Laporan Nilai Siswa", command=self.view_reports).pack(pady=10)
+        ctk.CTkButton(self, text="Keluar", command=lambda: exit_to_login(self)).pack(pady=10)
+
+    def simpan_soal(self):
+        data = [entry.get() for entry in self.entries.values()]
+        if all(data):
+            conn = connect_db()
+            cursor = conn.cursor()
+            cursor.execute(""" 
+                INSERT INTO questions 
+                (question, option_a, option_b, option_c, option_d, correct_answer, explanation) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, tuple(data))
+            conn.commit()
+            conn.close()
+            self.status.configure(text="Soal berhasil ditambahkan!", text_color="green")
+        else:
+            self.status.configure(text="Mohon isi semua data soal.", text_color="orange")
 
     def view_reports(self):
-        report_window = CTkToplevel(self)
-        report_window.title("Laporan Nilai Siswa")
-        report_window.geometry("600x400")
-
+        # Menampilkan laporan nilai siswa
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute('''SELECT u.username, r.score
-                          FROM reports r
-                          JOIN users u ON r.user_id = u.id
-                          WHERE u.role = 'siswa' ORDER BY r.score DESC''')
+        cursor.execute("SELECT user_id, score FROM reports")
         reports = cursor.fetchall()
         conn.close()
 
-        if reports:
-            for report in reports:
-                report_label = ctk.CTkLabel(report_window, text=f"Siswa: {report[0]} - Skor: {report[1]}")
-                report_label.pack(pady=5)
-        else:
-            no_report_label = ctk.CTkLabel(report_window, text="Tidak ada laporan nilai siswa.")
-            no_report_label.pack(pady=10)
+        report_text = "\n".join([f"Siswa ID: {report[0]} - Skor: {report[1]}" for report in reports])
+        self.status.configure(text=report_text, text_color="black")
 
-    def show_siswa_view(self, user_id):
-        label = ctk.CTkLabel(self, text="Soal yang tersedia:")
-        label.pack(pady=10)
 
+# Halaman Siswa
+class SiswaApp(ctk.CTk):
+    def __init__(self, user_id):
+        super().__init__()
+        self.title("Siswa - Kerjakan Soal")
+        self.geometry("400x500")
+        self.user_id = user_id
+        self.current_index = 0
+        self.score = 0
+        self.selected_answers = {}
+        self.load_questions()
+
+    def load_questions(self):
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM questions")
-        questions = cursor.fetchall()
+        self.questions = cursor.fetchall()
         conn.close()
 
-        current_question_index = 0
-        score = 0
-
-        def load_next_question():
-            nonlocal current_question_index
-            if current_question_index < len(questions):
-                q = questions[current_question_index]
-                q_label.configure(text=f"- {q[1]}")
-
-                option_a_btn.configure(text=f"A. {q[2]}", command=lambda: self.submit_answer(user_id, q[0], q[2], score))
-                option_b_btn.configure(text=f"B. {q[3]}", command=lambda: self.submit_answer(user_id, q[0], q[3], score))
-                option_c_btn.configure(text=f"C. {q[4]}", command=lambda: self.submit_answer(user_id, q[0], q[4], score))
-                option_d_btn.configure(text=f"D. {q[5]}", command=lambda: self.submit_answer(user_id, q[0], q[5], score))
-            else:
-                self.show_final_score(score)
-
-        if questions:
-            q = questions[current_question_index]
-            q_label = ctk.CTkLabel(self, text=f"- {q[1]}")
-            q_label.pack(anchor="w", padx=20)
-
-            option_a_btn = ctk.CTkButton(self, text=f"A. {q[2]}")
-            option_a_btn.pack(pady=5)
-            option_b_btn = ctk.CTkButton(self, text=f"B. {q[3]}")
-            option_b_btn.pack(pady=5)
-            option_c_btn = ctk.CTkButton(self, text=f"C. {q[4]}")
-            option_c_btn.pack(pady=5)
-            option_d_btn = ctk.CTkButton(self, text=f"D. {q[5]}")
-            option_d_btn.pack(pady=5)
-
-            next_btn = ctk.CTkButton(self, text="Next", command=load_next_question)
-            next_btn.pack(pady=10)
-
-            submit_btn = ctk.CTkButton(self, text="Submit", command=lambda: self.submit_final_score(user_id, score))
-            submit_btn.pack(pady=10)
+        if self.questions:
+            self.show_question(self.current_index)
         else:
-            q_label = ctk.CTkLabel(self, text="Belum ada soal.")
-            q_label.pack(pady=10)
+            ctk.CTkLabel(self, text="Belum ada soal.").pack(pady=10)
+            ctk.CTkButton(self, text="Keluar", command=lambda: exit_to_login(self)).pack(pady=10)
 
-        exit_btn = ctk.CTkButton(self, text="Keluar", command=self.exit_to_login)
-        exit_btn.pack(pady=10)
+    def show_question(self, index):
+        for widget in self.winfo_children():
+            widget.destroy()
 
-    def submit_answer(self, user_id, question_id, answer, score):
+        self.current_q = self.questions[index]
+        ctk.CTkLabel(self, text=f"({index + 1}) {self.current_q[1]}").pack(pady=10)
+
+        self.answer_status = ctk.CTkLabel(self, text="")
+        self.answer_status.pack(pady=5)
+
+        options = [self.current_q[2], self.current_q[3], self.current_q[4], self.current_q[5]]
+        for opt in options:
+            ctk.CTkButton(self, text=opt, command=lambda o=opt: self.handle_answer(o)).pack(pady=3)
+
+        if index < len(self.questions) - 1:
+            ctk.CTkButton(self, text="Next", command=lambda: self.show_question(index + 1)).pack(pady=10)
+        else:
+            ctk.CTkButton(self, text="Submit", command=self.finalize_quiz).pack(pady=10)
+
+    def handle_answer(self, option):
+        self.selected_answers[self.current_q[0]] = option
+        if option == self.current_q[6]:  # correct_answer
+            self.score += 1
+            self.answer_status.configure(text="Jawaban benar!", text_color="green")
+        else:
+            self.answer_status.configure(
+                text=f"Salah. Penjelasan: {self.current_q[7]}", text_color="red"
+            )
+
+    def finalize_quiz(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        total = len(self.questions)
+        nilai = int((self.score / total) * 100)
+
         conn = connect_db()
         cursor = conn.cursor()
-
-        # Mengecek jawaban yang benar
-        cursor.execute("SELECT correct_answer FROM questions WHERE id=?", (question_id,))
-        correct = cursor.fetchone()[0]
-        is_correct = (answer == correct)
-        score = 100 if is_correct else 0
-
-        # Menyimpan laporan nilai siswa
-        cursor.execute("INSERT INTO reports (user_id, question_id, score) VALUES (?, ?, ?)", (user_id, question_id, score))
+        cursor.execute("INSERT OR REPLACE INTO reports (user_id, score) VALUES (?, ?)", (self.user_id, nilai))
         conn.commit()
         conn.close()
 
-        self.output_label.configure(text="Jawaban berhasil dikirim!")
+        ctk.CTkLabel(self, text=f"Skor Anda: {nilai}").pack(pady=20)
+        ctk.CTkLabel(self, text="Soal berhasil disubmit. Terima kasih!").pack(pady=5)
+        ctk.CTkButton(self, text="Keluar", command=lambda: exit_to_login(self)).pack(pady=10)
 
-    def submit_final_score(self, user_id, score):
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO reports (user_id, score) VALUES (?, ?)", (user_id, score))
-        conn.commit()
-        conn.close()
 
-        self.output_label.configure(text=f"Skor Anda: {score}")
+# Halaman Registrasi
+class RegisterApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Halaman Registrasi")
+        self.geometry("300x350")
+        self.create_widgets()
 
-    def exit_to_login(self):
-        self.destroy()
-        app = App()
-        app.mainloop()
+    def create_widgets(self):
+        ctk.CTkLabel(self, text="Daftar Akun Baru").pack(pady=10)
 
-# Entry point aplikasi
+        self.username_entry = ctk.CTkEntry(self, placeholder_text="Nama Pengguna")
+        self.username_entry.pack(pady=10)
+
+        self.password_entry = ctk.CTkEntry(self, placeholder_text="Kata Sandi", show="*")
+        self.password_entry.pack(pady=10)
+
+        ctk.CTkLabel(self, text="Pilih Peran:").pack(pady=5)
+        self.role_option = ctk.CTkOptionMenu(self, values=["siswa", "guru"])
+        self.role_option.set("siswa")
+        self.role_option.pack(pady=5)
+
+        ctk.CTkButton(self, text="Daftar", command=self.register).pack(pady=20)
+        self.status_label = ctk.CTkLabel(self, text="")
+        self.status_label.pack()
+
+    def register(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+        role = self.role_option.get()
+
+        if username and password and role:
+            success = register_user(username, password, role)
+            if success:
+                self.status_label.configure(text="Registrasi berhasil!", text_color="green")
+            else:
+                self.status_label.configure(text="Username sudah digunakan!", text_color="red")
+        else:
+            self.status_label.configure(text="Isi semua data!", text_color="orange")
+
+
 if __name__ == "__main__":
-    app = App()
+    app = LoginApp()
     app.mainloop()
