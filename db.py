@@ -36,3 +36,30 @@ def register_user(username, password, role):
     conn.commit()
     conn.close()
     return True
+
+def initialize_database():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Buat tabel users jika belum ada
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )
+    ''')
+
+    # Buat tabel reports jika belum ada
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            score INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
+    conn.commit()
+    conn.close()

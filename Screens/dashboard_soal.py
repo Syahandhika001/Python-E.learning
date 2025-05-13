@@ -25,6 +25,10 @@ class DashboardSoal(ctk.CTk):
         # Label judul
         ctk.CTkLabel(self, text="Dashboard Soal", font=("Arial", 24)).place(relx=0.5, rely=0.05, anchor="center")
 
+        # Tombol Report Nilai
+        ctk.CTkButton(self, text="Report Nilai", command=self.open_report_nilai).place(
+        relx=0.5, rely=0.9, relwidth=0.2, relheight=0.07
+        )
         # Tombol Buat Soal
         ctk.CTkButton(self, text="Buat Soal", command=self.open_guru_screen).place(
             relx=0.3, rely=0.9, relwidth=0.2, relheight=0.07
@@ -40,6 +44,24 @@ class DashboardSoal(ctk.CTk):
         self.table_frame.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.7, anchor="center")
 
         self.load_questions()
+
+    def open_report_nilai(self):
+        from Screens.report_nilai import ReportNilai  # Import ReportNilai
+        self.withdraw()  # Sembunyikan window saat ini
+        report_nilai = ReportNilai(self.user_id, previous_screen=self)
+        report_nilai.mainloop()
+
+    def open_guru_screen(self):
+        from Screens.guru_screen import GuruApp  # Import GuruApp untuk "Buat Soal"
+        self.destroy()
+        guru_app = GuruApp(self.user_id, previous_screen=self)
+        guru_app.mainloop()
+
+    def open_edit_soal(self, soal_id):
+        from Screens.edit_soal import EditSoal # Import EditSoal untuk mengedit soal
+        self.destroy()
+        edit_soal = EditSoal(soal_id, self.user_id, previous_screen=self)
+        edit_soal.mainloop()
 
     def load_questions(self):
         conn = connect_db()
@@ -64,17 +86,6 @@ class DashboardSoal(ctk.CTk):
         else:
             ctk.CTkLabel(self.table_frame, text="Belum ada soal.", font=("Arial", 14)).pack(pady=20)
 
-    def open_guru_screen(self):
-        from Screens.guru_screen import GuruApp  # Import GuruApp untuk "Buat Soal"
-        self.destroy()
-        guru_app = GuruApp(self.user_id)
-        guru_app.mainloop()
-
-    def open_edit_soal(self, soal_id):
-        from Screens.edit_soal import EditSoal # Import EditSoal untuk mengedit soal
-        self.destroy()
-        edit_soal = EditSoal(soal_id, self.user_id)
-        edit_soal.mainloop()
 
     def exit_to_login(self):
         from Screens.login_screen import LoginApp

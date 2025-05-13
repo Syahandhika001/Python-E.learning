@@ -62,6 +62,7 @@ class EditSoal(ctk.CTk):
             relx=0.6, rely=0.85, relwidth=0.2, relheight=0.07
         )
 
+
     def update_soal(self):
         # Ambil data dari entry fields
         data = [entry.get() for entry in self.entries.values()]
@@ -78,7 +79,8 @@ class EditSoal(ctk.CTk):
             ctk.CTkLabel(self, text="Soal berhasil diperbarui!", text_color="green").place(relx=0.5, rely=0.9, anchor="center")
         else:
             ctk.CTkLabel(self, text="Mohon isi semua data soal.", text_color="red").place(relx=0.5, rely=0.9, anchor="center")
+    
     def back_to_previous(self):
         self.destroy()
         if self.previous_screen:
-            self.previous_screen.deiconify()  # Tampilkan kembali screen sebelumnya
+            self.previous_screen.deiconify()   # Tampilkan kembali screen sebelumnya

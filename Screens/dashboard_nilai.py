@@ -62,10 +62,10 @@ class DashboardNilai(ctk.CTk):
     def open_siswa_screen(self):
         from Screens.siswa_screen import SiswaApp  # Import SiswaApp untuk mengerjakan soal
         self.destroy()
-        siswa_app = SiswaApp(self.user_id)
+        siswa_app = SiswaApp(self.user_id, previous_screen=self)
         siswa_app.mainloop()
 
     def back_to_previous(self):
         self.destroy()
         if self.previous_screen:
-            self.previous_screen.deiconify()  # Tampilkan kembali screen sebelumnya
+            self.previous_screen.deiconify()   # Tampilkan kembali screen sebelumnya
