@@ -61,7 +61,7 @@ class DashboardNilai(ctk.CTk):
 
     def open_siswa_screen(self):
         from Screens.siswa_screen import SiswaApp  # Import SiswaApp untuk mengerjakan soal
-        self.destroy()
+        self.withdraw()
         siswa_app = SiswaApp(self.user_id, previous_screen=self)
         siswa_app.mainloop()
 

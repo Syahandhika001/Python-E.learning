@@ -53,13 +53,13 @@ class DashboardSoal(ctk.CTk):
 
     def open_guru_screen(self):
         from Screens.guru_screen import GuruApp  # Import GuruApp untuk "Buat Soal"
-        self.destroy()
+        self.withdraw()
         guru_app = GuruApp(self.user_id, previous_screen=self)
         guru_app.mainloop()
 
     def open_edit_soal(self, soal_id):
         from Screens.edit_soal import EditSoal # Import EditSoal untuk mengedit soal
-        self.destroy()
+        self.withdraw()
         edit_soal = EditSoal(soal_id, self.user_id, previous_screen=self)
         edit_soal.mainloop()
 

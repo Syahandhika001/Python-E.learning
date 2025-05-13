@@ -36,7 +36,7 @@ class SiswaApp(ctk.CTk):
             self.show_question(self.current_index)
         else:
             ctk.CTkLabel(self, text="Belum ada soal.", font=("Arial", 16)).place(relx=0.5, rely=0.4, anchor="center")
-            ctk.CTkButton(self, text="Keluar", command=self.exit_to_login).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
+            ctk.CTkButton(self, text="Keluar", command=self.back_to_previous).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
 
     def show_question(self, index):
         for widget in self.winfo_children():
@@ -88,7 +88,7 @@ class SiswaApp(ctk.CTk):
 
         ctk.CTkLabel(self, text=f"Skor Anda: {nilai}", font=("Arial", 16)).place(relx=0.5, rely=0.4, anchor="center")
         ctk.CTkLabel(self, text="Soal berhasil disubmit. Terima kasih!", font=("Arial", 14)).place(relx=0.5, rely=0.5, anchor="center")
-        ctk.CTkButton(self, text="Keluar", command=self.exit_to_login).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
+        ctk.CTkButton(self, text="Keluar", command=self.back_to_previous).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
 
     def exit_to_login(self):
         from Screens.login_screen import LoginApp
