@@ -6,7 +6,7 @@ from screeninfo import get_monitors
 class RegisterApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Halaman Registrasi")
+        self.title("RegisterScreen")
         self.set_fullscreen_windowed()
         self.create_widgets()
 

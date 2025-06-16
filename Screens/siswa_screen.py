@@ -43,6 +43,7 @@ class SiswaApp(ctk.CTk):
             widget.destroy()
 
         self.current_q = self.questions[index]
+        # urutan: id, question, option_a, option_b, option_c, option_d, correct_answer, explanation, materi_id
         ctk.CTkLabel(self, text=f"({index + 1}) {self.current_q[1]}", font=("Arial", 16)).place(relx=0.5, rely=0.1, anchor="center")
 
         self.answer_status = ctk.CTkLabel(self, text="", font=("Arial", 14))
@@ -72,6 +73,11 @@ class SiswaApp(ctk.CTk):
             self.answer_status.configure(
                 text=f"Salah. Penjelasan: {self.current_q[7]}", text_color="red"
             )
+        self.current_index += 1
+        if self.current_index < len(self.questions):
+            self.show_question(self.current_index)
+        else:
+            self.finalize_quiz()
 
     def finalize_quiz(self):
         for widget in self.winfo_children():

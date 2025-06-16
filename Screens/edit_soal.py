@@ -7,7 +7,7 @@ from screeninfo import get_monitors
 class EditSoal(ctk.CTk):
     def __init__(self, soal_id, user_id, previous_screen=None):
         super().__init__()
-        self.title("Edit Soal")
+        self.title("EditSoal")
         self.set_fullscreen_windowed()
         self.soal_id = soal_id
         self.user_id = user_id

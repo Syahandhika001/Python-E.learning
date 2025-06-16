@@ -6,7 +6,7 @@ from screeninfo import get_monitors
 class DashboardSoal(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
-        self.title("Dashboard Soal - Guru")
+        self.title("DashboardSoal")
         self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen  # Simpan referensi ke screen sebelumnya
@@ -23,27 +23,25 @@ class DashboardSoal(ctk.CTk):
 
     def create_widgets(self):
         # Label judul
-        ctk.CTkLabel(self, text="Dashboard Soal", font=("Arial", 24)).place(relx=0.5, rely=0.05, anchor="center")
+        ctk.CTkLabel(self, text="Dashboard Soal", font=("Arial", 24)).place(relx=0.5, rely=0.15, anchor="center")
 
-        # Tombol Report Nilai
-        ctk.CTkButton(self, text="Report Nilai", command=self.open_report_nilai).place(
-        relx=0.5, rely=0.9, relwidth=0.2, relheight=0.07
+        # Tombol CRUD Materi
+        ctk.CTkButton(self, text="Kelola Materi", command=self.open_materi_screen).place(
+            relx=0.2, rely=0.4, relwidth=0.2, relheight=0.12
         )
-        # Tombol Buat Soal
-        ctk.CTkButton(self, text="Buat Soal", command=self.open_guru_screen).place(
-            relx=0.3, rely=0.9, relwidth=0.2, relheight=0.07
+        # Tombol CRUD Bahan Ajar
+        ctk.CTkButton(self, text="Kelola Bahan Ajar", command=self.open_bahan_ajar_screen).place(
+            relx=0.4, rely=0.6, relwidth=0.2, relheight=0.12
+        )
+        # Tombol CRUD Soal
+        ctk.CTkButton(self, text="Kelola Soal", command=self.open_soal_screen).place(
+            relx=0.6, rely=0.4, relwidth=0.2, relheight=0.12
         )
 
         # Tombol Kembali
         ctk.CTkButton(self, text="Kembali", command=self.exit_to_login).place(
-            relx=0.7, rely=0.9, relwidth=0.2, relheight=0.07
+            relx=0.9, rely=0.9, relwidth=0.08, relheight=0.06
         )
-
-        # Tabel soal
-        self.table_frame = ctk.CTkFrame(self)
-        self.table_frame.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.7, anchor="center")
-
-        self.load_questions()
 
     def open_report_nilai(self):
         from Screens.report_nilai import ReportNilai  # Import ReportNilai
@@ -63,30 +61,6 @@ class DashboardSoal(ctk.CTk):
         edit_soal = EditSoal(soal_id, self.user_id, previous_screen=self)
         edit_soal.mainloop()
 
-    def load_questions(self):
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, question FROM questions")
-        questions = cursor.fetchall()
-        conn.close()
-
-        # Tampilkan soal dalam tabel
-        for widget in self.table_frame.winfo_children():
-            widget.destroy()
-
-        if questions:
-            for i, (q_id, question) in enumerate(questions):
-                # Tambahkan tombol untuk setiap soal
-                ctk.CTkButton(
-                    self.table_frame,
-                    text=f"{i + 1}. {question}",
-                    command=lambda q_id=q_id: self.open_edit_soal(q_id),
-                    anchor="w"
-                ).grid(row=i, column=0, sticky="w", padx=10, pady=5)
-        else:
-            ctk.CTkLabel(self.table_frame, text="Belum ada soal.", font=("Arial", 14)).pack(pady=20)
-
-
     def exit_to_login(self):
         from Screens.login_screen import LoginApp
         self.destroy()
@@ -97,3 +71,21 @@ class DashboardSoal(ctk.CTk):
         self.destroy()
         if self.previous_screen:
             self.previous_screen.deiconify()  # Tampilkan kembali screen sebelumnya
+
+    def open_materi_screen(self):
+        from Screens.materi_screen import MateriScreen
+        self.withdraw()
+        materi_screen = MateriScreen(self.user_id, previous_screen=self)
+        materi_screen.mainloop()
+
+    def open_bahan_ajar_screen(self):
+        from Screens.bahan_ajar_screen import BahanAjarScreen
+        self.withdraw()
+        bahan_ajar_screen = BahanAjarScreen(self.user_id, previous_screen=self)
+        bahan_ajar_screen.mainloop()
+
+    def open_soal_screen(self):
+        from Screens.soal_screen import SoalScreen
+        self.withdraw()
+        soal_screen = SoalScreen(self.user_id, previous_screen=self)
+        soal_screen.mainloop()

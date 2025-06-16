@@ -7,7 +7,7 @@ from screeninfo import get_monitors
 class DashboardNilai(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
-        self.title("Dashboard Nilai - Siswa")
+        self.title("DashboardNilai")
         self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen  # Simpan referensi ke screen sebelumnya
@@ -32,14 +32,18 @@ class DashboardNilai(ctk.CTk):
 
         self.load_scores()
 
-        # Tombol Kerjakan Soal
-        ctk.CTkButton(self, text="Kerjakan Soal", command=self.open_siswa_screen).place(
-            relx=0.3, rely=0.9, relwidth=0.2, relheight=0.07
+        # Tombol Report Nilai
+        ctk.CTkButton(self, text="Report Nilai", command=self.open_report_nilai).place(
+        relx=0.5, rely=0.9, relwidth=0.2, relheight=0.07
         )
-
         # Tombol Kembali
         ctk.CTkButton(self, text="Kembali", command=self.back_to_previous).place(
             relx=0.7, rely=0.9, relwidth=0.2, relheight=0.07
+        )
+
+        # Tambahkan tombol ke dashboard siswa
+        ctk.CTkButton(self, text="Dashboard Materi & Soal", command=self.open_siswa_dashboard).place(
+            relx=0.5, rely=0.8, relwidth=0.3, relheight=0.08, anchor="center"
         )
 
     def load_scores(self):
@@ -59,11 +63,17 @@ class DashboardNilai(ctk.CTk):
         else:
             ctk.CTkLabel(self.table_frame, text="Belum ada nilai.", font=("Arial", 14)).pack(pady=20)
 
-    def open_siswa_screen(self):
-        from Screens.siswa_screen import SiswaApp  # Import SiswaApp untuk mengerjakan soal
+    def open_report_nilai(self):
+        from Screens.report_nilai import ReportNilaiScreen  # Ganti dengan nama file dan kelas yang sesuai
         self.withdraw()
-        siswa_app = SiswaApp(self.user_id, previous_screen=self)
-        siswa_app.mainloop()
+        report_nilai_screen = ReportNilaiScreen(self.user_id, previous_screen=self)
+        report_nilai_screen.mainloop()
+
+    def open_siswa_dashboard(self):
+        from Screens.siswa_dashboard import SiswaDashboard
+        self.withdraw()
+        siswa_dashboard = SiswaDashboard(self.user_id, previous_screen=self)
+        siswa_dashboard.mainloop()
 
     def back_to_previous(self):
         self.destroy()

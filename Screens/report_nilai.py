@@ -6,7 +6,7 @@ from screeninfo import get_monitors
 class ReportNilai(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
-        self.title("Report Nilai - Guru")
+        self.title("ReportNilai")
         self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen  # Simpan referensi ke screen sebelumnya

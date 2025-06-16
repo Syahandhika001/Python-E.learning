@@ -61,5 +61,41 @@ def initialize_database():
         )
     ''')
 
+    # Buat tabel materi
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS materi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            judul TEXT NOT NULL,
+            deskripsi TEXT
+        )
+    ''')
+
+    # Buat tabel bahan_ajar, terhubung ke materi
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS bahan_ajar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            materi_id INTEGER,
+            nama_bahan TEXT NOT NULL,
+            file_path TEXT,
+            FOREIGN KEY (materi_id) REFERENCES materi (id)
+        )
+    ''')
+
+    # Buat tabel questions, terhubung ke materi
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            materi_id INTEGER,
+            question TEXT,
+            option_a TEXT,
+            option_b TEXT,
+            option_c TEXT,
+            option_d TEXT,
+            correct_answer TEXT,
+            explanation TEXT,
+            FOREIGN KEY (materi_id) REFERENCES materi (id)
+        )
+    ''')
+
     conn.commit()
     conn.close()
