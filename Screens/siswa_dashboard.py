@@ -1,179 +1,106 @@
 import customtkinter as ctk
 from db import connect_db
 from screeninfo import get_monitors
+from Screens.siswa_bahan_ajar import SiswaBahanAjar
+from Screens.siswa_kerjakan_soal import SiswaKerjakanSoal
+import tkinter as tk
+
+class GradientFrame(ctk.CTkFrame):
+    def __init__(self, master, color1, color2, **kwargs):
+        super().__init__(master, **kwargs)
+        self.color1 = color1
+        self.color2 = color2
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+        self.bind("<Configure>", self._draw_gradient)
+
+    def _draw_gradient(self, event=None):
+        self.canvas.delete("all")
+        width = self.winfo_width()
+        height = self.winfo_height()
+        limit = height
+        (r1, g1, b1) = self.winfo_rgb(self.color1)
+        (r2, g2, b2) = self.winfo_rgb(self.color2)
+        r_ratio = float(r2 - r1) / limit
+        g_ratio = float(g2 - g1) / limit
+        b_ratio = float(b2 - b1) / limit
+        for i in range(limit):
+            nr = int(r1 + (r_ratio * i))
+            ng = int(g1 + (g_ratio * i))
+            nb = int(b1 + (b_ratio * i))
+            color = f'#{nr//256:02x}{ng//256:02x}{nb//256:02x}'
+            self.canvas.create_line(0, i, width, i, fill=color)
 
 class SiswaDashboard(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
-        self.title("SiswaDashboard")
-        self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen
+        self.title("Dashboard Materi")
+        self.configure(bg="#7f2100")
+        self.set_fullscreen()
         self.create_widgets()
 
-    def set_fullscreen_windowed(self):
+    def set_fullscreen(self):
         monitor = get_monitors()[0]
-        screen_width = monitor.width
-        screen_height = monitor.height
-        self.geometry(f"{screen_width}x{screen_height}+0+0")
+        self.geometry(f"{monitor.width}x{monitor.height}+0+0")
 
     def create_widgets(self):
-        ctk.CTkLabel(self, text="Pilih Materi", font=("Arial", 24)).place(relx=0.5, rely=0.1, anchor="center")
-        self.materi_option = ctk.CTkOptionMenu(self, values=self.get_materi_list())
-        self.materi_option.place(relx=0.5, rely=0.2, anchor="center")
-        ctk.CTkButton(self, text="Belajar", command=self.belajar).place(relx=0.4, rely=0.3, relwidth=0.15, relheight=0.08)
-        ctk.CTkButton(self, text="Kerjakan Soal", command=self.kerjakan_soal).place(relx=0.6, rely=0.3, relwidth=0.15, relheight=0.08)
-        ctk.CTkButton(self, text="Kembali", command=self.back_to_previous).place(relx=0.9, rely=0.9, relwidth=0.08, relheight=0.06)
+        # Gradient background
+        self.gradient = GradientFrame(self, color1="#e65c00", color2="#7f2100")
+        self.gradient.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-    def get_materi_list(self):
+        # Frame utama
+        main_frame = ctk.CTkFrame(self.gradient, fg_color="#dddddd", corner_radius=12)
+        main_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.9, relheight=0.85)
+
+        # Judul
+        ctk.CTkLabel(main_frame, text="Dashboard Siswa", font=("Arial", 36, "bold"), text_color="#ff8800").pack(pady=20)
+
+        # Frame scroll
+        container = ctk.CTkScrollableFrame(main_frame, width=1000, height=500, fg_color="#f3e5ab")
+        container.pack(padx=40, pady=10, fill="both", expand=True)
+
+        # Ambil data materi
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, judul FROM materi")
-        rows = cursor.fetchall()
+        cursor.execute("SELECT id, judul, deskripsi FROM materi")
+        materi_list = cursor.fetchall()
         conn.close()
-        return [f"{id_materi} - {judul}" for id_materi, judul in rows] if rows else ["-"]
 
-    def belajar(self):
-        materi_val = self.materi_option.get()
-        if materi_val == "-":
-            return
-        materi_id = int(materi_val.split(' - ')[0])
+        if not materi_list:
+            ctk.CTkLabel(container, text="Belum ada materi.", font=("Arial", 16), text_color="gray").pack(pady=20)
+        else:
+            for materi_id, judul, deskripsi in materi_list:
+                # Kartu Materi
+                card = ctk.CTkFrame(container, fg_color="#fff8dc", corner_radius=16)
+                card.pack(padx=10, pady=15, fill="x")
+
+                ctk.CTkLabel(card, text=judul, font=("Arial", 20, "bold"), text_color="#7f2100").pack(anchor="w", padx=15, pady=(12, 6))
+                ctk.CTkLabel(card, text=deskripsi, font=("Arial", 14), text_color="#5a1d0a", wraplength=1000, justify="left").pack(anchor="w", padx=15, pady=(0, 10))
+
+                # Tombol Aksi
+                button_frame = ctk.CTkFrame(card, fg_color="transparent")
+                button_frame.pack(anchor="e", padx=15, pady=(0, 15))
+
+                ctk.CTkButton(button_frame, text="Detail", width=100, fg_color="#e67c4a", hover_color="#d35400", text_color="white",
+                              font=("Arial", 14, "bold"), command=lambda mid=materi_id: self.open_bahan(mid)).pack(side="left", padx=5)
+                ctk.CTkButton(button_frame, text="Kerjakan Soal", width=140, fg_color="#f39c12", hover_color="#e67e22", text_color="white",
+                              font=("Arial", 14, "bold"), command=lambda mid=materi_id: self.open_soal(mid)).pack(side="left", padx=5)
+
+        # Tombol kembali
+        ctk.CTkButton(main_frame, text="Kembali", command=self.go_back, fg_color="#7f2100", hover_color="#a23c00", text_color="white",
+                      font=("Arial", 16, "bold"), width=120).pack(pady=25)
+
+    def open_bahan(self, materi_id):
         self.withdraw()
         SiswaBahanAjar(self.user_id, materi_id, previous_screen=self).mainloop()
 
-    def kerjakan_soal(self):
-        materi_val = self.materi_option.get()
-        if materi_val == "-":
-            return
-        materi_id = int(materi_val.split(' - ')[0])
+    def open_soal(self, materi_id):
         self.withdraw()
         SiswaKerjakanSoal(self.user_id, materi_id, previous_screen=self).mainloop()
 
-    def back_to_previous(self):
-        self.destroy()
-        if self.previous_screen:
-            self.previous_screen.deiconify()
-
-class SiswaBahanAjar(ctk.CTk):
-    def __init__(self, user_id, materi_id, previous_screen=None):
-        super().__init__()
-        self.title("SiswaBahanAjar")
-        self.set_fullscreen_windowed()
-        self.user_id = user_id
-        self.materi_id = materi_id
-        self.previous_screen = previous_screen
-        self.create_widgets()
-
-    def set_fullscreen_windowed(self):
-        monitor = get_monitors()[0]
-        screen_width = monitor.width
-        screen_height = monitor.height
-        self.geometry(f"{screen_width}x{screen_height}+0+0")
-
-    def create_widgets(self):
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT judul FROM materi WHERE id=?", (self.materi_id,))
-        materi = cursor.fetchone()
-        ctk.CTkLabel(self, text=f"Bahan Ajar: {materi[0] if materi else ''}", font=("Arial", 22)).place(relx=0.5, rely=0.1, anchor="center")
-        cursor.execute("SELECT nama_bahan, file_path FROM bahan_ajar WHERE materi_id=?", (self.materi_id,))
-        bahan_list = cursor.fetchall()
-        conn.close()
-        frame = ctk.CTkFrame(self)
-        frame.place(relx=0.5, rely=0.5, relwidth=0.7, relheight=0.6, anchor="center")
-        if bahan_list:
-            for i, (nama, file_path) in enumerate(bahan_list):
-                ctk.CTkLabel(frame, text=f"{i+1}. {nama}", font=("Arial", 16)).grid(row=i, column=0, sticky="w", padx=10, pady=5)
-                ctk.CTkLabel(frame, text=file_path, font=("Arial", 14), text_color="blue").grid(row=i, column=1, sticky="w", padx=10, pady=5)
-        else:
-            ctk.CTkLabel(frame, text="Belum ada bahan ajar.", font=("Arial", 16)).pack(pady=20)
-        ctk.CTkButton(self, text="Kembali", command=self.back_to_dashboard).place(relx=0.9, rely=0.9, relwidth=0.08, relheight=0.06)
-
-    def back_to_dashboard(self):
-        self.destroy()
-        if self.previous_screen:
-            self.previous_screen.deiconify()
-
-class SiswaKerjakanSoal(ctk.CTk):
-    def __init__(self, user_id, materi_id, previous_screen=None):
-        super().__init__()
-        self.title("SiswaKerjakanSoal")
-        self.set_fullscreen_windowed()
-        self.user_id = user_id
-        self.materi_id = materi_id
-        self.previous_screen = previous_screen
-        self.current_index = 0
-        self.score = 0
-        self.selected_answers = {}
-        self.load_questions()
-
-    def set_fullscreen_windowed(self):
-        monitor = get_monitors()[0]
-        screen_width = monitor.width
-        screen_height = monitor.height
-        self.geometry(f"{screen_width}x{screen_height}+0+0")
-
-    def load_questions(self):
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM questions WHERE materi_id=?", (self.materi_id,))
-        self.questions = cursor.fetchall()
-        conn.close()
-        if self.questions:
-            self.show_question(self.current_index)
-        else:
-            ctk.CTkLabel(self, text="Belum ada soal.", font=("Arial", 16)).place(relx=0.5, rely=0.4, anchor="center")
-            ctk.CTkButton(self, text="Kembali", command=self.back_to_dashboard).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
-
-    def show_question(self, index):
-        for widget in self.winfo_children():
-            widget.destroy()
-        self.current_q = self.questions[index]
-        print(f"DEBUG SOAL SISWA: {self.current_q}")  # Debug print seluruh field soal
-        ctk.CTkLabel(self, text=f"({index + 1}) {self.current_q[1]}", font=("Arial", 16)).place(relx=0.5, rely=0.1, anchor="center")
-        self.answer_status = ctk.CTkLabel(self, text="", font=("Arial", 14))
-        self.answer_status.place(relx=0.5, rely=0.8, anchor="center")
-        options = [self.current_q[2], self.current_q[3], self.current_q[4], self.current_q[5]]  # option_a, b, c, d
-        for i, opt in enumerate(options):
-            ctk.CTkButton(self, text=opt, command=lambda o=opt: self.handle_answer(o), font=("Arial", 14)).place(
-                relx=0.5, rely=0.2 + i * 0.1, relwidth=0.6, relheight=0.07, anchor="center"
-            )
-
-    def handle_answer(self, option):
-        # Cegah double answer
-        qid = self.current_q[0]
-        if qid in self.selected_answers:
-            return
-        self.selected_answers[qid] = option
-        if option == self.current_q[7]:  # correct_answer ada di index 7
-            self.score += 1
-        self.current_index += 1
-        if self.current_index < len(self.questions):
-            self.show_question(self.current_index)
-        else:
-            self.finalize_quiz()
-
-    def finalize_quiz(self):
-        for widget in self.winfo_children():
-            widget.destroy()
-        total = len(self.questions)
-        # Hitung skor berdasarkan selected_answers
-        benar = 0
-        for q in self.questions:
-            qid = q[0]
-            if qid in self.selected_answers and self.selected_answers[qid] == q[7]:
-                benar += 1
-        nilai = int((benar / total) * 100) if total > 0 else 0
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO reports (user_id, score) VALUES (?, ?)", (self.user_id, nilai))
-        conn.commit()
-        conn.close()
-        ctk.CTkLabel(self, text=f"Skor Anda: {nilai}", font=("Arial", 16)).place(relx=0.5, rely=0.4, anchor="center")
-        ctk.CTkLabel(self, text="Soal berhasil disubmit. Terima kasih!", font=("Arial", 14)).place(relx=0.5, rely=0.5, anchor="center")
-        ctk.CTkButton(self, text="Kembali", command=self.back_to_dashboard).place(relx=0.5, rely=0.6, relwidth=0.2, relheight=0.07, anchor="center")
-
-    def back_to_dashboard(self):
+    def go_back(self):
         self.destroy()
         if self.previous_screen:
             self.previous_screen.deiconify()

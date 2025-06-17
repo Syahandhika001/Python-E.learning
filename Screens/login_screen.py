@@ -91,7 +91,8 @@ class LoginApp(ctk.CTk):
         from Screens.guru_screen import GuruApp
         from Screens.siswa_screen import SiswaApp
         from Screens.dashboard_soal import DashboardSoal
-        from Screens.dashboard_nilai import DashboardNilai
+        # from Screens.dashboard_nilai import DashboardNilai  # ← Tidak dipakai lagi
+        from Screens.siswa_dashboard import SiswaDashboard   # ← Tambahkan ini
 
         username = self.username_entry.get()
         password = self.password_entry.get()
@@ -109,7 +110,8 @@ class LoginApp(ctk.CTk):
                 if role == "guru":
                     DashboardSoal(user_id, previous_screen=self).mainloop()
                 else:
-                    DashboardNilai(user_id, previous_screen=self).mainloop()
+                    # Ganti dari DashboardNilai ke SiswaDashboard
+                    SiswaDashboard(user_id, previous_screen=self).mainloop()
             else:
                 self.status_label.configure(text="Username atau Password salah!", text_color="red")
         else:
