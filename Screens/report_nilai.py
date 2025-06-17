@@ -3,6 +3,33 @@ from db import connect_db
 from screeninfo import get_monitors
 
 
+class GradientFrame(ctk.CTkFrame):
+    def __init__(self, master, color1, color2, **kwargs):
+        super().__init__(master, **kwargs)
+        self.color1 = color1
+        self.color2 = color2
+        self.canvas = ctk.CTkCanvas(self, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+        self.bind("<Configure>", self._draw_gradient)
+
+    def _draw_gradient(self, event=None):
+        self.canvas.delete("all")
+        width = self.winfo_width()
+        height = self.winfo_height()
+        limit = height
+        (r1, g1, b1) = self.winfo_rgb(self.color1)
+        (r2, g2, b2) = self.winfo_rgb(self.color2)
+        r_ratio = float(r2 - r1) / limit
+        g_ratio = float(g2 - g1) / limit
+        b_ratio = float(b2 - b1) / limit
+        for i in range(limit):
+            nr = int(r1 + (r_ratio * i))
+            ng = int(g1 + (g_ratio * i))
+            nb = int(b1 + (b_ratio * i))
+            color = f'#{nr//256:02x}{ng//256:02x}{nb//256:02x}'
+            self.canvas.create_line(0, i, width, i, fill=color)
+
+
 class ReportNilai(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
@@ -10,6 +37,9 @@ class ReportNilai(ctk.CTk):
         self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen  # Simpan referensi ke screen sebelumnya
+        # Gradient background
+        self.gradient = GradientFrame(self, "#ff6600", "#b34700")
+        self.gradient.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.create_widgets()
 
     def set_fullscreen_windowed(self):
@@ -22,19 +52,20 @@ class ReportNilai(ctk.CTk):
         self.geometry(f"{screen_width}x{screen_height}+0+0")
 
     def create_widgets(self):
+        card = ctk.CTkFrame(self.gradient, fg_color="#f2f2f2", corner_radius=16)
+        card.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.8, anchor="center")
+
         # Label judul
-        ctk.CTkLabel(self, text="Report Nilai Siswa", font=("Arial", 24)).place(relx=0.5, rely=0.05, anchor="center")
+        ctk.CTkLabel(card, text="Report Nilai Siswa", font=("Arial", 28, "bold"), text_color="#ff6600").place(relx=0.5, rely=0.08, anchor="center")
 
         # Tabel nilai
-        self.table_frame = ctk.CTkFrame(self)
-        self.table_frame.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.7, anchor="center")
+        self.table_frame = ctk.CTkFrame(card, fg_color="#fff7e6", corner_radius=8)
+        self.table_frame.place(relx=0.5, rely=0.55, relwidth=0.9, relheight=0.7, anchor="center")
 
         self.load_reports()
 
         # Tombol Kembali
-        ctk.CTkButton(self, text="Kembali", command=self.back_to_previous).place(
-            relx=0.5, rely=0.9, relwidth=0.2, relheight=0.07, anchor="center"
-        )
+        ctk.CTkButton(card, text="Kembali", command=self.back_to_previous, fg_color="#b34700", hover_color="#ff6600", text_color="white", font=("Arial", 16, "bold")).place(relx=0.5, rely=0.93, relwidth=0.2, relheight=0.07, anchor="center")
 
     def load_reports(self):
         conn = connect_db()

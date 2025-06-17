@@ -2,6 +2,32 @@ import customtkinter as ctk
 from db import connect_db
 from screeninfo import get_monitors
 
+class GradientFrame(ctk.CTkFrame):
+    def __init__(self, master, color1, color2, **kwargs):
+        super().__init__(master, **kwargs)
+        self.color1 = color1
+        self.color2 = color2
+        self.canvas = ctk.CTkCanvas(self, highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+        self.bind("<Configure>", self._draw_gradient)
+
+    def _draw_gradient(self, event=None):
+        self.canvas.delete("all")
+        width = self.winfo_width()
+        height = self.winfo_height()
+        limit = height
+        (r1, g1, b1) = self.winfo_rgb(self.color1)
+        (r2, g2, b2) = self.winfo_rgb(self.color2)
+        r_ratio = float(r2 - r1) / limit
+        g_ratio = float(g2 - g1) / limit
+        b_ratio = float(b2 - b1) / limit
+        for i in range(limit):
+            nr = int(r1 + (r_ratio * i))
+            ng = int(g1 + (g_ratio * i))
+            nb = int(b1 + (b_ratio * i))
+            color = f'#{nr//256:02x}{ng//256:02x}{nb//256:02x}'
+            self.canvas.create_line(0, i, width, i, fill=color)
+
 class MateriScreen(ctk.CTk):
     def __init__(self, user_id, previous_screen=None):
         super().__init__()
@@ -9,6 +35,9 @@ class MateriScreen(ctk.CTk):
         self.set_fullscreen_windowed()
         self.user_id = user_id
         self.previous_screen = previous_screen
+        # Gradient background
+        self.gradient = GradientFrame(self, "#ff6600", "#b34700")
+        self.gradient.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.create_widgets()
 
     def set_fullscreen_windowed(self):
@@ -18,23 +47,23 @@ class MateriScreen(ctk.CTk):
         self.geometry(f"{screen_width}x{screen_height}+0+0")
 
     def create_widgets(self):
-        ctk.CTkLabel(self, text="Daftar Materi", font=("Arial", 24)).place(relx=0.5, rely=0.05, anchor="center")
-        self.table_frame = ctk.CTkFrame(self)
-        self.table_frame.place(relx=0.5, rely=0.4, relwidth=0.8, relheight=0.5, anchor="center")
+        card = ctk.CTkFrame(self.gradient, fg_color="#f2f2f2", corner_radius=16)
+        card.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.8, anchor="center")
+        ctk.CTkLabel(card, text="Daftar Materi", font=("Arial", 28, "bold"), text_color="#ff6600").place(relx=0.5, rely=0.08, anchor="center")
+        self.table_frame = ctk.CTkFrame(card, fg_color="#fff7e6", corner_radius=8)
+        self.table_frame.place(relx=0.5, rely=0.45, relwidth=0.9, relheight=0.5, anchor="center")
         self.load_materi()
-
-        # Form tambah/edit
-        ctk.CTkLabel(self, text="Judul Materi:").place(relx=0.2, rely=0.8, anchor="w")
-        self.judul_entry = ctk.CTkEntry(self, width=300)
+        ctk.CTkLabel(card, text="Judul Materi:", font=("Arial", 14, "bold"), text_color="#b34700").place(relx=0.2, rely=0.8, anchor="w")
+        self.judul_entry = ctk.CTkEntry(card, width=300, fg_color="#fff7e6", text_color="#222222")
         self.judul_entry.place(relx=0.3, rely=0.8, anchor="w")
-        ctk.CTkLabel(self, text="Deskripsi:").place(relx=0.2, rely=0.85, anchor="w")
-        self.deskripsi_entry = ctk.CTkEntry(self, width=300)
+        ctk.CTkLabel(card, text="Deskripsi:", font=("Arial", 14, "bold"), text_color="#b34700").place(relx=0.2, rely=0.85, anchor="w")
+        self.deskripsi_entry = ctk.CTkEntry(card, width=300, fg_color="#fff7e6", text_color="#222222")
         self.deskripsi_entry.place(relx=0.3, rely=0.85, anchor="w")
-        self.status_label = ctk.CTkLabel(self, text="", font=("Arial", 12))
+        self.status_label = ctk.CTkLabel(card, text="", font=("Arial", 12), text_color="#b34700")
         self.status_label.place(relx=0.5, rely=0.93, anchor="center")
-        ctk.CTkButton(self, text="Tambah/Update Materi", command=self.save_materi).place(relx=0.6, rely=0.8, relwidth=0.15, relheight=0.07)
-        ctk.CTkButton(self, text="Hapus Materi", command=self.delete_materi).place(relx=0.8, rely=0.8, relwidth=0.15, relheight=0.07)
-        ctk.CTkButton(self, text="Kembali", command=self.back_to_dashboard).place(relx=0.9, rely=0.95, relwidth=0.08, relheight=0.05)
+        ctk.CTkButton(card, text="Tambah/Update Materi", command=self.save_materi, fg_color="#ff6600", hover_color="#b34700", text_color="white", font=("Arial", 16, "bold")).place(relx=0.6, rely=0.8, relwidth=0.15, relheight=0.07)
+        ctk.CTkButton(card, text="Hapus Materi", command=self.delete_materi, fg_color="#b34700", hover_color="#ff6600", text_color="white", font=("Arial", 16, "bold")).place(relx=0.8, rely=0.8, relwidth=0.15, relheight=0.07)
+        ctk.CTkButton(card, text="Kembali", command=self.back_to_dashboard, fg_color="#b34700", hover_color="#ff6600", text_color="white", font=("Arial", 16, "bold")).place(relx=0.9, rely=0.95, relwidth=0.08, relheight=0.05)
         self.selected_id = None
 
     def load_materi(self):
@@ -45,12 +74,13 @@ class MateriScreen(ctk.CTk):
         cursor.execute("SELECT id, judul, deskripsi FROM materi")
         rows = cursor.fetchall()
         conn.close()
-        ctk.CTkLabel(self.table_frame, text="Judul", font=("Arial", 14, "bold")).grid(row=0, column=0, padx=10, pady=5)
-        ctk.CTkLabel(self.table_frame, text="Deskripsi", font=("Arial", 14, "bold")).grid(row=0, column=1, padx=10, pady=5)
+        # Header tabel dengan warna font gelap
+        ctk.CTkLabel(self.table_frame, text="Judul", font=("Arial", 14, "bold"), text_color="#222222").grid(row=0, column=0, padx=10, pady=5)
+        ctk.CTkLabel(self.table_frame, text="Deskripsi", font=("Arial", 14, "bold"), text_color="#222222").grid(row=0, column=1, padx=10, pady=5)
         for i, (id_materi, judul, deskripsi) in enumerate(rows, start=1):
-            btn = ctk.CTkButton(self.table_frame, text=judul, command=lambda i=id_materi, j=judul, d=deskripsi: self.select_materi(i, j, d), anchor="w")
+            btn = ctk.CTkButton(self.table_frame, text=judul, command=lambda i=id_materi, j=judul, d=deskripsi: self.select_materi(i, j, d), anchor="w", fg_color="#2176ae", text_color="white", font=("Arial", 13, "bold"))
             btn.grid(row=i, column=0, sticky="w", padx=10, pady=5)
-            ctk.CTkLabel(self.table_frame, text=deskripsi, anchor="w").grid(row=i, column=1, sticky="w", padx=10, pady=5)
+            ctk.CTkLabel(self.table_frame, text=deskripsi, anchor="w", text_color="#222222", font=("Arial", 12)).grid(row=i, column=1, sticky="w", padx=10, pady=5)
 
     def select_materi(self, id_materi, judul, deskripsi):
         self.selected_id = id_materi

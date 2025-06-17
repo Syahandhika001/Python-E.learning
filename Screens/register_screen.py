@@ -92,7 +92,17 @@ class RegisterApp(ctk.CTk):
                                (username, password, role))
                 conn.commit()
                 self.status_label.configure(text="Pendaftaran berhasil!", text_color="green")
+                conn.close()
+                # Setelah berhasil daftar, langsung ke login
+                self.after(1000, self.kembali_ke_login)
+                return
             conn.close()
         else:
             self.status_label.configure(text="Isi semua data!", text_color="orange")
+
+    def kembali_ke_login(self):
+        from Screens.login_screen import LoginApp
+        self.destroy()
+        login_app = LoginApp()
+        login_app.mainloop()
 

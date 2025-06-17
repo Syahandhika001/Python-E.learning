@@ -91,6 +91,9 @@ class SiswaDashboard(ctk.CTk):
         # Tombol kembali
         ctk.CTkButton(main_frame, text="Kembali", command=self.go_back, fg_color="#7f2100", hover_color="#a23c00", text_color="white",
                       font=("Arial", 16, "bold"), width=120).pack(pady=25)
+        # Tombol keluar ke login
+        ctk.CTkButton(main_frame, text="Keluar ke Login", command=self.exit_to_login, fg_color="#b34700", hover_color="#ff6600", text_color="white",
+                      font=("Arial", 16, "bold"), width=120).pack(pady=5)
 
     def open_bahan(self, materi_id):
         self.withdraw()
@@ -104,3 +107,9 @@ class SiswaDashboard(ctk.CTk):
         self.destroy()
         if self.previous_screen:
             self.previous_screen.deiconify()
+
+    def exit_to_login(self):
+        from Screens.login_screen import LoginApp
+        self.destroy()
+        login_app = LoginApp()
+        login_app.mainloop()

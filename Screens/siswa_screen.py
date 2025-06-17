@@ -55,15 +55,6 @@ class SiswaApp(ctk.CTk):
                 relx=0.5, rely=0.2 + i * 0.1, relwidth=0.6, relheight=0.07, anchor="center"
             )
 
-        if index < len(self.questions) - 1:
-            ctk.CTkButton(self, text="Next", command=lambda: self.show_question(index + 1)).place(
-                relx=0.4, rely=0.9, relwidth=0.2, relheight=0.07
-            )
-        else:
-            ctk.CTkButton(self, text="Submit", command=self.finalize_quiz).place(
-                relx=0.6, rely=0.9, relwidth=0.2, relheight=0.07
-            )
-
     def handle_answer(self, option):
         self.selected_answers[self.current_q[0]] = option
         if option == self.current_q[6]:  # correct_answer

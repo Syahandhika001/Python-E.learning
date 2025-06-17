@@ -62,14 +62,17 @@ class SiswaKerjakanSoal(ctk.CTk):
             self.show_info("Belum ada soal.", error=True)
 
     def show_question(self, index):
+        # DEBUG: Print seluruh isi tuple q untuk memastikan urutan field
+        print('DEBUG q:', self.questions[index])
+        # Mapping field questions: q[1]=question, q[2]=option_a, q[3]=option_b, q[4]=option_c, q[5]=option_d, q[6]=correct_answer, q[7]=correct_value, q[8]=explanation
         for widget in self.gradient.winfo_children():
             widget.destroy()
 
         q = self.questions[index]
         ctk.CTkLabel(self.gradient, text=f"Soal {index+1}:", font=("Arial", 28, "bold"), text_color="#5a1d0a").pack(pady=(40, 10))
-        ctk.CTkLabel(self.gradient, text=q[2], font=("Arial", 20, "bold"), text_color="#5a1d0a", wraplength=900).pack(pady=10)
+        ctk.CTkLabel(self.gradient, text=q[1], font=("Arial", 20, "bold"), text_color="#5a1d0a", wraplength=900).pack(pady=10)
 
-        options = [("A", q[3]), ("B", q[4]), ("C", q[5]), ("D", q[6])]
+        options = [("A", q[2]), ("B", q[3]), ("C", q[4]), ("D", q[5])]
         for kode, teks in options:
             ctk.CTkButton(
                 self.gradient, text=f"{kode}. {teks}", font=("Arial", 16, "bold"),
@@ -81,11 +84,12 @@ class SiswaKerjakanSoal(ctk.CTk):
                       fg_color="#888888", text_color="white", font=("Arial", 14, "bold")).pack(pady=30)
 
     def select_answer(self, answer, question):
+        # Mapping field questions: question[1]=question, question[2]=option_a, question[3]=option_b, question[4]=option_c, question[5]=option_d, question[6]=correct_answer, question[7]=correct_value, question[8]=explanation
         if question[0] in self.selected_answers:
             return
 
         self.selected_answers[question[0]] = answer
-        correct = question[7]
+        correct = question[6]  # kode jawaban benar (A/B/C/D)
         explanation = question[8]
 
         if answer == correct:
@@ -126,6 +130,15 @@ class SiswaKerjakanSoal(ctk.CTk):
         total = len(self.questions)
         nilai = int((self.score / total) * 100) if total > 0 else 0
 
+        # Cari materi yang salah dijawab
+        salah_list = []
+        for q in self.questions:
+            qid = q[0]
+            correct = q[6]
+            if qid in self.selected_answers and self.selected_answers[qid] != correct:
+                # Simpan materi_id dan info soal yang salah
+                salah_list.append(q)
+
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("INSERT OR REPLACE INTO reports (user_id, score) VALUES (?, ?)", (self.user_id, nilai))
@@ -137,6 +150,16 @@ class SiswaKerjakanSoal(ctk.CTk):
         ctk.CTkButton(self.gradient, text="Kembali", command=self.go_back,
                       fg_color="#e67c4a", hover_color="#d35400", text_color="white",
                       font=("Arial", 16, "bold"), corner_radius=15).pack(pady=20)
+
+        # Jika ada soal salah, tampilkan tombol ke dashboard materi
+        if salah_list:
+            def buka_dashboard_materi():
+                self.destroy()
+                from Screens.siswa_dashboard import SiswaDashboard
+                SiswaDashboard(self.user_id, previous_screen=None).mainloop()
+            ctk.CTkButton(self.gradient, text="Pelajari Materi yang Salah", command=buka_dashboard_materi,
+                          fg_color="#ff6600", hover_color="#b34700", text_color="white",
+                          font=("Arial", 16, "bold"), corner_radius=15).pack(pady=10)
 
     def show_info(self, message, error=False):
         for widget in self.gradient.winfo_children():
